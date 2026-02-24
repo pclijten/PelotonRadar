@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Rider {
+  id         Int     @id @default(autoincrement())
+  name       String
+  fcRiderId  Int     @unique
+  watches    Watch[]
+  entries    Entry[]
+  results    Result[]
+  createdAt  DateTime @default(now())
+}
+
+model Race {
+  id        Int     @id @default(autoincrement())
+  name      String
+  fcRaceId  Int
+  year      Int
+  watches   Watch[]
+  entries   Entry[]
+  results   Result[]
+  createdAt DateTime @default(now())
+
+  @@unique([fcRaceId, year])
+}
+
+model Watch {
+  id      Int   @id @default(autoincrement())
+  riderId Int
+  raceId  Int
+  rider   Rider @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  race    Race  @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([riderId, raceId])
+}
+
+model Entry {
+  id         Int      @id @default(autoincrement())
+  riderId    Int
+  raceId     Int
+  detectedAt DateTime @default(now())
+  rider      Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  race       Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([riderId, raceId])
+}
+
+model Result {
+  id        Int      @id @default(autoincrement())
+  riderId   Int
+  raceId    Int
+  position  String?
+  status    String?
+  updatedAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  race      Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([riderId, raceId])
+}

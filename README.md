@@ -1,19 +1,43 @@
-# PelotonRadar (MVP)
+# PelotonRadar on Vercel (Free)
 
-FastAPI app that watches selected riders in selected races and emails you when:
-- a rider appears on the startlist
-- a result becomes available (and updates)
+This is a Next.js (App Router) + Prisma + Postgres backend that:
+- stores riders, races, watchlist
+- checks FirstCycling startlists + results
+- emails you on startlist detection and results
 
-## Local run
+## 1) Create a free Postgres DB
+Recommended: Supabase or Neon.
+Copy the connection string into `DATABASE_URL` (with sslmode=require if needed).
+
+## 2) Deploy to Vercel
+- Import this repo in Vercel
+- Set env vars (Project Settings → Environment Variables):
+  - DATABASE_URL
+  - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_TO
+  - (optional) CRON_SECRET
+
+## 3) Prisma migrate
+In Vercel, add a one-time command locally:
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+npm install
+npx prisma migrate dev --name init
 ```
-Open: http://127.0.0.1:8000/docs
+For production, you can run:
+```bash
+npx prisma migrate deploy
+```
+(You may also run migrations via a CI step; simplest is local migrate before first deploy.)
 
-## Deploy (Render)
-Use the included `render.yaml` Blueprint.
-Set env vars on Render (SMTP_* + MAIL_TO + DB_URL).
-Set `WEB_RUN_URL` on the cron service to your web service URL.
+## 4) Vercel Cron
+`vercel.json` schedules `/api/run-check` every 15 minutes.
+
+If you set `CRON_SECRET`, add it in Vercel Cron request headers by switching to Vercel Cron UI (or call with header manually).
+This project also supports GET/POST on /api/run-check.
+
+## API
+- POST /api/riders { name, fcRiderId }
+- GET /api/riders
+- POST /api/races { name, fcRaceId, year }
+- GET /api/races
+- POST /api/watchlist { riderId, raceId }
+- GET /api/riders/:id/history
