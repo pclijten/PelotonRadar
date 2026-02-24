@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: pelotonradar-web
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_TO
+        sync: false
+      - key: DB_URL
+        sync: false
+
+  - type: cron
+    name: pelotonradar-cron
+    env: python
+    schedule: "*/15 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -c "import os, requests; requests.post(os.environ['WEB_RUN_URL'].rstrip('/') + '/run-check', timeout=25)"
+    envVars:
+      - key: WEB_RUN_URL
+        sync: false
